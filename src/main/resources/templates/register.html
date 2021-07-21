@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <p>갯마을 관리자 이메일(<span th:text="${email}"></span>)을 인증하시겠습니까? 아래 링크를 클릭해주세요.</p>
+    <a th:href="@{localhost:8080/@admin/auth/confirm(token=${token})}" target="_blank">
+        localhost:8080/@admin/auth/confirm?token=<span th:text="${token}"></span>
+    </a>
+    <p>위 링크는 3일간 유효합니다.</p>
+</body>
+</html>
