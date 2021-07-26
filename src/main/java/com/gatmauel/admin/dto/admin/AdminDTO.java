@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Data
 @ToString
@@ -14,10 +15,9 @@ public class AdminDTO {
     private Long id;
 
     @Email(message="Email address should be valid")
-    @NotNull
     private String email;
 
-    @NotNull
+    @Size(max=100, message="must not more than 100 characters")
     private String password;
 
     @Builder.Default

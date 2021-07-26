@@ -6,6 +6,7 @@ import com.gatmauel.admin.entity.admin.AdminRole;
 import com.gatmauel.admin.entity.admin.EmailAddressException;
 import com.gatmauel.admin.repository.admin.AdminRepository;
 import com.gatmauel.admin.service.auth.AuthService;
+import com.gatmauel.admin.service.common.EmailService;
 import lombok.extern.log4j.Log4j2;
 import org.junit.After;
 import org.junit.Before;
@@ -13,20 +14,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doNothing;
 
 @Log4j2
 @RunWith(SpringRunner.class)
@@ -44,17 +44,22 @@ public class AuthServiceTest {
     @Autowired
     private AdminRepository adminRepository;
 
+    @MockBean
+    private EmailService emailService;
+
     private String email="admin@gatmauel.com";
 
     private String password="password";
 
     @Before
-    public void registerAdmin(){
+    public void registerAdmin() throws Exception{
         Admin admin= Admin.builder()
                 .email(this.email)
                 .hashedPassword(passwordEncoder.encode(this.password))
                 .build();
         admin.addAdminRole(AdminRole.ADMIN);
+
+        doNothing().when(emailService).sendConfirmEmail(this.email, "token");
 
         adminRepository.save(admin);
     }
@@ -69,9 +74,11 @@ public class AuthServiceTest {
         String email="amicusadaras6@gatmauel.com";
         String password="password";
 
-        AdminDTO dto= AdminDTO.builder().
-                email(email).
-                password(password).build();
+        AdminDTO dto= AdminDTO.builder()
+                .email(email)
+                .password(password).build();
+
+        doNothing().when(emailService).sendConfirmEmail(email, "token");
 
         Map<String, Object> result=authService.register(dto);
         log.debug(result);
@@ -104,7 +111,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testModifyPassword(){
+    public void testModifyPassword() throws Exception{
         String newPassword="newPassword";
 
         Optional<Admin> optional=adminRepository.findByEmail(this.email);

@@ -2,7 +2,7 @@ package com.gatmauel.admin.service.auth;
 
 import com.gatmauel.admin.dto.admin.AdminDTO;
 import com.gatmauel.admin.entity.admin.Admin;
-import com.gatmauel.admin.entity.admin.RegistrationException;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -11,7 +11,7 @@ import java.util.Map;
 public interface AuthService {
     Map<String, Object> register(AdminDTO dto) throws Exception;
 
-    Map<String, Object> modify(Long id, AdminDTO dto);
+    Map<String, Object> modify(Long id, AdminDTO dto) throws Exception;
 
     Map<String, Long> remove(Long id);
 

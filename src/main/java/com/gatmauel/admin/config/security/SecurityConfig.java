@@ -26,6 +26,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
+    LogoutSuccessHandler logoutSuccessHandler(){
+        return new ApiLogoutSuccessHandler();
+    }
+
+    @Bean
     public ApiLoginFilter apiLoginFilter() throws Exception{
         ApiLoginFilter apiLoginFilter=new ApiLoginFilter("/@admin/auth/login");
         apiLoginFilter.setAuthenticationManager(authenticationManager());
@@ -33,11 +38,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         apiLoginFilter.setAuthenticationSuccessHandler(new ApiLoginSuccessHandler());
 
         return apiLoginFilter;
-    }
-
-    @Bean
-    LogoutSuccessHandler logoutSuccessHandler(){
-        return new ApiLogoutSuccessHandler();
     }
 
     @Override

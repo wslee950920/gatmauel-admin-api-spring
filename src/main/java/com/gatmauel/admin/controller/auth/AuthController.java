@@ -3,6 +3,7 @@ package com.gatmauel.admin.controller.auth;
 import com.gatmauel.admin.dto.admin.AdminDTO;
 import com.gatmauel.admin.entity.admin.EmailAddressException;
 import com.gatmauel.admin.service.auth.AuthService;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -10,17 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+@Log4j2
 @RequiredArgsConstructor
 @RequestMapping("/@admin/auth")
 @RestController
-@Log4j2
 public class AuthController {
     private final AuthService authService;
 
@@ -54,7 +52,29 @@ public class AuthController {
     @PatchMapping("/modify/{id}")
     @PreAuthorize("#id==principal.getId()")
     public ResponseEntity<Map<String, Object>> modify(@PathVariable(value="id") Long id, @RequestBody AdminDTO dto){
-        return new ResponseEntity<>(authService.modify(id, dto), HttpStatus.OK);
+        try{
+            return new ResponseEntity<>(authService.modify(id, dto), HttpStatus.OK);
+        } catch (IllegalArgumentException e){
+            Map<String, Object> error = new HashMap<>();
+            HttpStatus status;
+
+            error.put("code", HttpStatus.BAD_REQUEST.value());
+            error.put("message", e.getMessage());
+
+            status = HttpStatus.BAD_REQUEST;
+
+            return new ResponseEntity<>(error, status);
+        } catch (Exception e){
+            Map<String, Object> error = new HashMap<>();
+            HttpStatus status;
+
+            error.put("code", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error.put("message", e.getMessage());
+
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+            return new ResponseEntity<>(error, status);
+        }
     }
 
     @DeleteMapping("/remove/{id}")
@@ -64,11 +84,23 @@ public class AuthController {
     }
 
     @GetMapping("/confirm")
-    public String confirm(@RequestParam("token") String token) throws Exception{
+    public ResponseEntity<String> confirm(@RequestParam("token") String token){
         log.debug(token);
 
-        String email=authService.confirm(token);
+        try{
+            String email=authService.confirm(token);
 
-        return "<div><br/><h2>"+email+"인증이 완료되었습니다.</h2></div>";
+            String result="<div><br/><h2>"+email+"인증이 완료되었습니다.</h2></div>";
+
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch(IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch(ExpiredJwtException e) {
+            String result="<div><br/><h2>링크가 만료됐습니다.</h2></div>";
+
+            return new ResponseEntity<>(result, HttpStatus.NOT_ACCEPTABLE);
+        } catch(Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

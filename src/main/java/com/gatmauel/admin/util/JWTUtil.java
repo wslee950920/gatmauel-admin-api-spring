@@ -30,7 +30,7 @@ public class JWTUtil {
                 .compact();
     }
 
-    public Long validateAndExtract(String tokenStr) throws Exception{
+    public Long validateAndExtract(String tokenStr){
         try {
             Jws<Claims> jws = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
