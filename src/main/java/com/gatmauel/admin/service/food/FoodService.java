@@ -1,13 +1,15 @@
 package com.gatmauel.admin.service.food;
 
 import com.gatmauel.admin.dto.food.FoodDTO;
+import com.gatmauel.admin.dto.food.FoodMultipartRequestDTO;
 import com.gatmauel.admin.entity.food.Food;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public interface FoodService {
-    FoodDTO register(FoodDTO dto);
+    FoodDTO register(FoodMultipartRequestDTO dto) throws Exception;
 
     List<FoodDTO> getList();
 

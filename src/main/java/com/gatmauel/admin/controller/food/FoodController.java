@@ -1,29 +1,19 @@
 package com.gatmauel.admin.controller.food;
 
-import com.gatmauel.admin.config.aws.AWSConfig;
 import com.gatmauel.admin.dto.food.FoodDTO;
+import com.gatmauel.admin.dto.food.FoodMultipartRequestDTO;
 import com.gatmauel.admin.service.food.FoodService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-
-import javax.servlet.http.HttpServletRequest;
-
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,35 +24,31 @@ import java.util.Map;
 public class FoodController {
     private final FoodService foodService;
 
-    private final AmazonS3 s3Client;
+    @PostMapping(value="/register", produces=MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Object> register(@ModelAttribute FoodMultipartRequestDTO requestDTO) {
+        try{
+            return new ResponseEntity<>(foodService.register(requestDTO), HttpStatus.OK);
+        } catch(IllegalArgumentException e){
+            Map<String, Object> error = new HashMap<>();
+            HttpStatus status;
 
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
+            error.put("code", HttpStatus.BAD_REQUEST.value());
+            error.put("message", e.getMessage());
 
-    @PostMapping(value = "/register", produces= MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<FoodDTO> register(HttpServletRequest request) throws AmazonServiceException, SdkClientException, IOException {
-            MultipartHttpServletRequest multipartRequest=(MultipartHttpServletRequest) request;
+            status = HttpStatus.BAD_REQUEST;
 
-            MultipartFile multipartFile=multipartRequest.getFile("img");
-            String originalName=multipartFile.getOriginalFilename();
+            return new ResponseEntity<>(error, status);
+        } catch(Exception e){
+            Map<String, Object> error = new HashMap<>();
+            HttpStatus status;
 
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(multipartFile.getSize());
+            error.put("code", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error.put("message", e.getMessage());
 
-            PutObjectRequest s3Request = new PutObjectRequest(bucketName, "food/"+originalName, multipartFile.getInputStream(), metadata);
-            s3Client.putObject(s3Request);
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
 
-            FoodDTO dto=FoodDTO.builder().
-                    name(request.getParameter("name")).
-                    img(originalName).
-                    price(Integer.parseInt(request.getParameter("price"))).
-                    prior(Integer.parseInt(request.getParameter("prior"))).
-                    deli(Boolean.parseBoolean(request.getParameter("deli"))).
-                    comp(request.getParameter("comp")).
-                    categoryId(Long.parseLong(request.getParameter("categoryId"))).build();
-            log.debug(dto);
-
-            return new ResponseEntity<>(foodService.register(dto), HttpStatus.OK);
+            return new ResponseEntity<>(error, status);
+        }
     }
 
     @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)

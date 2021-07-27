@@ -1,16 +1,20 @@
 package com.gatmauel.admin.service.food;
 
 import com.gatmauel.admin.dto.food.FoodDTO;
+import com.gatmauel.admin.dto.food.FoodMultipartRequestDTO;
 import com.gatmauel.admin.entity.category.Category;
 import com.gatmauel.admin.entity.food.Food;
 import com.gatmauel.admin.repository.category.CategoryRepository;
 import com.gatmauel.admin.repository.food.FoodRepository;
 
+import com.gatmauel.admin.service.common.UploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,13 +29,26 @@ public class FoodServiceImpl implements FoodService {
 
     private final FoodRepository foodRepository;
 
+    private final UploadService uploadService;
+
     @Transactional
     @Override
-    public FoodDTO register(FoodDTO dto) {
-        Category category=categoryRepository.getById(dto.getCategoryId());
+    public FoodDTO register(FoodMultipartRequestDTO requestDTO) throws Exception {
+        Assert.notNull(requestDTO.getFile(), "need img file");
+
+        MultipartFile file=requestDTO.getFile();
+        Assert.isTrue(!file.isEmpty(), "broken file");
+
+        String originalName=uploadService.uploadImg(file);
+
+        FoodDTO dto= requestDTO;
+        dto.setImg(originalName);
+        log.debug(dto);
 
         Food food=dtoToEntity(dto);
         log.debug("food : "+food);
+
+        Category category=categoryRepository.getById(requestDTO.getCategoryId());
 
         category.addFood(food);
         categoryRepository.save(category);
